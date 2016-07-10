@@ -229,8 +229,17 @@ System.prototype.loadSystem = function (name, abs) {
     return loadingSystem;
 };
 
-System.prototype.loadSystemDescription = function loadSystemDescription(location, name) {
+System.prototype.loadSystemDescription = function loadSystemDescription(locations, name) {
     var self = this;
+    var location;
+    if (Array.isArray(locations)) {
+        if (locations.length > 1) {
+            return self.loadFirstSystemDescription(location);
+        }
+        location = locations[0];
+    } else {
+        location = locations;
+    }
     var descriptionLocation = URL.resolve(location, "package.json");
     return self.read(descriptionLocation, "utf-8", "application/json")
     .then(function (json) {
@@ -248,6 +257,41 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
             JSON.stringify(location) + " because " + error.message;
         throw error;
     });
+};
+
+System.prototype.loadFirstSystemDescription = function loadFirstSystemDescription(locations) {
+    var self = this;
+    var response = Q.defer();
+
+    var descriptionLocation;
+    var i = 0;
+
+    function attempt() {
+        descriptionLocation = URL.resolve(locations[i], "package.json");
+        self.read(descriptionLocation, "utf-8", "application/json").then(thenJSON, thenError);
+    }
+
+    function thenJSON(json) {
+        var data;
+        try {
+            data = JSON.parse(json);
+        } catch (error) {
+            error.message = error.message + " in " +
+                JSON.stringify(descriptionLocation);
+            throw error;
+        }
+        return [locations[i], data];
+    }
+
+    function thenError(error) {
+        if (++i >= locations.length) {
+            response.reject(error);
+            return;
+        }
+        attempt();
+    }
+
+    return response.promise;
 };
 
 System.prototype.actuallyLoadSystem = function (name, abs) {
