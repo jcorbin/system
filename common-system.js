@@ -242,7 +242,7 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
             throw error;
         }
     }, function (error) {
-        error.message = "Can't load package " + JSON.stringify(name) + " at " +
+        error.message = "Can't load package " + JSON.stringify(location) + " at " +
             JSON.stringify(location) + " because " + error.message;
         throw error;
     });
