@@ -802,8 +802,17 @@ System.prototype.addDependencies = function addDependencies(dependencies) {
         var name = names[index];
         self.dependencies[name] = true;
         if (!self.systemLocations[name]) {
-            var location = URL.resolve(self.location, "node_modules/" + name + "/");
-            self.systemLocations[name] = location;
+            var locs = [];
+            var s = self;
+            do {
+                locs.push(URL.resolve(s.location, "node_modules/" + name + "/"));
+                s = s.parent;
+            } while (s)
+            if (locs.length > 1) {
+                self.systemLocations[name] = locs;
+            } else {
+                self.systemLocations[name] = locs[0];
+            }
         }
     }
 };
