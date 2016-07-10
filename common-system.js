@@ -80,8 +80,8 @@ function System(location, description, options) {
 System.load = function loadSystem(location, options) {
     var self = this;
     return self.prototype.loadSystemDescription(location, "<anonymous>")
-    .then(function (description) {
-        return new self(location, description, options);
+    .then(function (locDesc) {
+        return new self(locDesc[0], locDesc[1], options);
     });
 };
 
@@ -234,13 +234,15 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
     var descriptionLocation = URL.resolve(location, "package.json");
     return self.read(descriptionLocation, "utf-8", "application/json")
     .then(function (json) {
+        var data;
         try {
-            return JSON.parse(json);
+            data = JSON.parse(json);
         } catch (error) {
             error.message = error.message + " in " +
                 JSON.stringify(descriptionLocation);
             throw error;
         }
+        return [location, data];
     }, function (error) {
         error.message = "Can't load package " + JSON.stringify(location) + " at " +
             JSON.stringify(location) + " because " + error.message;
@@ -251,8 +253,8 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
 System.prototype.actuallyLoadSystem = function (name, abs) {
     var self = this;
     var System = self.constructor;
-    var location = self.systemLocations[name];
-    if (!location) {
+    var locations = self.systemLocations[name];
+    if (!locations) {
         var via = abs ? " via " + JSON.stringify(abs) : "";
         throw new Error(
             "Can't load package " + JSON.stringify(name) + via +
@@ -264,9 +266,11 @@ System.prototype.actuallyLoadSystem = function (name, abs) {
         buildSystem = self.buildSystem.actuallyLoadSystem(name, abs);
     }
     return Q.all([
-        self.loadSystemDescription(location, name),
+        self.loadSystemDescription(locations, name),
         buildSystem
-    ]).spread(function onDescriptionAndBuildSystem(description, buildSystem) {
+    ]).spread(function onDescriptionAndBuildSystem(locDesc, buildSystem) {
+        var location = locDesc[0];
+        var description = locDesc[1];
         var system = new System(location, description, {
             parent: self,
             root: self.root,
