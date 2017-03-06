@@ -234,7 +234,7 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
     var location;
     if (Array.isArray(locations)) {
         if (locations.length > 1) {
-            return self.loadFirstSystemDescription(location);
+            return self.loadFirstSystemDescription(locations, name);
         }
         location = locations[0];
     } else {
@@ -259,7 +259,7 @@ System.prototype.loadSystemDescription = function loadSystemDescription(location
     });
 };
 
-System.prototype.loadFirstSystemDescription = function loadFirstSystemDescription(locations) {
+System.prototype.loadFirstSystemDescription = function loadFirstSystemDescription(locations, name) {
     var self = this;
     var response = Q.defer();
 
@@ -291,6 +291,7 @@ System.prototype.loadFirstSystemDescription = function loadFirstSystemDescriptio
         attempt();
     }
 
+    attempt();
     return response.promise;
 };
 
